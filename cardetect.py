@@ -1,77 +1,161 @@
-import time
-import cv2 as cv
-import numpy as np
+import cv2 
+import dlib # dlib로 직사각형 그리기
 import math
 
-prototxt_path = "MobileNetSSD_deploy.prototxt"
-model_path = "MobileNetSSD_deploy.caffemodel"
+carCascade = cv2.CascadeClassifier('myhaar.xml') # Detection을 하기 위한 Cascade Classifier
+video = cv2.VideoCapture('test.mp4') # Input 영상
 
-CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
-    "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
-    "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
-    "sofa", "train", "tvmonitor"]
+WIDTH = 1280 # 프레임, fps 등등
+HEIGHT = 720
+length = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+print(length)
+total_frame = int(video.get(cv2. CAP_PROP_FPS))
 
-net = cv.dnn.readNetFromCaffe(prototxt_path, model_path)
+frame_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+frame_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-def process_frame(next_frame):
-    print("Framing")
-    rgb = cv.cvtColor(next_frame, cv.COLOR_BGR2RGB)
-    (H, W) = next_frame.shape[:2]
+size = (int(frame_width),int(frame_height))
 
-    blob = cv.dnn.blobFromImage(next_frame, size=(300, 300), ddepth=cv.CV_8U)
-    net.setInput(blob, scalefactor=1.0/127.5, mean=[127.5, 127.5, 127.5])
-    detections = net.forward()
+print(total_frame)
 
-    for i in np.arange(0, detections.shape[2]):
-        confidence = detections[0, 0, i, 2]
-        if confidence > 0.7:
-            idx = int(detections[0, 0, i, 1])
-            if CLASSES[idx] != "car" or CLASSES[idx] != "bus" or CLASSES[idx] != "train" or CLASSES[idx] != "bicyle" or CLASSES[idx] != "motorbike":
-                continue
-            box = detections[0, 0, i, 3:7] * np.array([W, H, W, H])
-            (startX, startY, endX, endY) = box.astype("int")
-            
-            cv.rectangle(next_frame, (startX, startY), (endX, endY), (0, 255, 0), 3)
+def estimateSpeed(loc1, loc2): # 속도 구하기
+    distance = math.sqrt(math.pow(loc2[0] - loc1[0], 2) + math.pow(loc2[1] - loc1[1], 2)) # 시작점과 끝점 사이의 거리 구하기
+    ppm = 8.8 # pixel per meter
+    d_meters = distance / ppm # d/v
+    fps = 150 # frame per second
+    speed = d_meters * fps * 3.6 # d*v*3.6 m/s -> km/h
+    return speed
 
-    return next_frame
+def estimateanomal(loc1, loc2): # 변칙성 구하기
+    distance = abs(loc2[0] - loc1[0]) * 10 # x 좌표 차이 구하기
+    ppm = 8.8
+    d_meters = distance / ppm 
+    #fps = 150
+    #speed = d_meters * fps * 3.6
+    return d_meters  
+
+def trackMultipleObjects(): # tracking
+    rectangleColor = (0, 255, 0) # 직사각형 default 속성
+    frameCounter = 0
+    currentCarID = 0
+    fps = 0
+    
+    trackCar = {}
+    carNumbers = {}
+    carLocation1 = {}
+    carLocation2 = {}
+    speed = [None] * 1000
+    anomal = [None] * 1000
+    fourcc = cv2.VideoWriter_fourcc('m','p','4','v') # video fromat: mp4
+    
+    out = cv2.VideoWriter('outpy.mp4',fourcc, 20, size)
 
 
-def VehicheDetection(filename):
-    print("VechicleDection_MobileNetSSD")
-    cap = cv.VideoCapture(filename)
-
-    frame_width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
-    frame_height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
-
-    fps = 20
-    size = (int(frame_width),int(frame_height))
-    fourcc = cv.VideoWriter_fourcc('m','p','4','v')
-    out = cv.VideoWriter()
-    success = out.open('output_mobilenetssd.mov', fourcc, fps, size, True)
-    frame_count = 0
-    # start timer
-    t1 = time.time()
-    while True:
-        ret, next_frame = cap.read()
-        
-        if ret == False: break
-
-        frame_count += 1
-        next_frame = process_frame(next_frame)
-
-        out.write(next_frame)
-        
-        key = cv.waitKey(50)
-        
-        if key == 27:
+    while frameCounter<5396: # 5396은 동영상 길이이기 때문에 total_frame을 넣어주면 됨
+        rc, image = video.read() #image에 한 프레임의 사진 넣기
+        if rc == False:
             break
+        if type(image) == type(None):
+            break
+        
+        #image = cv2.resize(image, (WIDTH, HEIGHT))
+        resultImage = image.copy()
+        
+        frameCounter = frameCounter + 1
+        
+        carIDdelete = []
 
-    t2 = time.time()
+        for carID in trackCar.keys(): # 한 프레임 넘어갔을 때 특정 차량이 아직 화면에 있는지 identify
+            trackingQuality = trackCar[carID].update(image)
+            
+            if trackingQuality < 5:
+                carIDdelete.append(carID)
+                
+        for carID in carIDdelete: # 차량이 화면 밖으로 나갔으면 carID에서 없애기
+            trackCar.pop(carID, None)
+            carLocation1.pop(carID, None)
+            carLocation2.pop(carID, None)
+        
+        if not (frameCounter % 10):
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) 
+            cars = carCascade.detectMultiScale(gray, 1.1, 13, 18, (24, 24)) # 자동차 detect
+            
+            for (_x, _y, _w, _h) in cars: # 직사각형 만들기 (x,y 위치 w,h 크기)
+                x = int(_x)
+                y = int(_y)
+                w = int(_w)
+                h = int(_h)
+            
+                x_bar = x + 0.5 * w
+                y_bar = y + 0.5 * h
+                
+                matchCarID = None
+            
+                for carID in trackCar.keys(): # 차가 있을 때 위치 저장
+                    trackedPosition = trackCar[carID].get_position() 
+                    
+                    t_x = int(trackedPosition.left())
+                    t_y = int(trackedPosition.top())
+                    t_w = int(trackedPosition.width())
+                    t_h = int(trackedPosition.height())
+                    
+                    t_x_bar = t_x + 0.5 * t_w
+                    t_y_bar = t_y + 0.5 * t_h
+                
+                    if ((t_x <= x_bar <= (t_x + t_w)) and (t_y <= y_bar <= (t_y + t_h)) and (x <= t_x_bar <= (x + w)) and (y <= t_y_bar <= (y + h))):
+                        matchCarID = carID
+                
+                if matchCarID is None: # 차량이 없을 때 추가하는 기능
+                    tracker = dlib.correlation_tracker()
+                    tracker.start_track(image, dlib.rectangle(x, y, x + w, y + h)) 
+                    
+                    trackCar[currentCarID] = tracker
+                    carLocation1[currentCarID] = [x, y, w, h]
 
-    fps = str( float(frame_count / float(t2 - t1))) + ' FPS'
+                    currentCarID = currentCarID + 1
 
-    cap.release()
-    cv.destroyAllWindows()
+        for carID in trackCar.keys(): # 직사각형을 자동차에 씌우기
+            trackedPosition = trackCar[carID].get_position()
+                    
+            t_x = int(trackedPosition.left())
+            t_y = int(trackedPosition.top())
+            t_w = int(trackedPosition.width())
+            t_h = int(trackedPosition.height())
+            
+            cv2.rectangle(resultImage, (t_x, t_y), (t_x + t_w, t_y + t_h), rectangleColor, 4)
+
+            carLocation2[carID] = [t_x, t_y, t_w, t_h]
+        
+        for i in carLocation1.keys(): # speed violation, anomaly detection
+            if frameCounter % 1 == 0:
+                [x1, y1, w1, h1] = carLocation1[i]
+                [x2, y2, w2, h2] = carLocation2[i]
+        
+                carLocation1[i] = [x2, y2, w2, h2]
+        
+                if [x1, y1, w1, h1] != [x2, y2, w2, h2]:
+                    if (speed[i] == None or speed[i] == 0) and y1 >= 275 and y1 <= 285:
+                        speed[i] = estimateSpeed([x1, y1, w1, h1], [x2, y2, w2, h2])
+                    if (anomal[i] == None or anomal[i] == 0) and y1 >= 275 and y1 <= 285:
+                        anomal[i] = estimateanomal([x1, y1, w1, h1], [x2, y2, w2, h2])
+                    
+                    if speed[i] != None:
+                        if speed [i]>= 140:
+                            cv2.putText(resultImage, "Speed Violation", (int(x1 + w1/2), int(y1-5)),cv2.FONT_HERSHEY_SIMPLEX,0.75, (0,0,255), 2)
+                    if anomal[i] != None:
+                        print(anomal[i])
+                        if anomal[i] >= 3:
+                            cv2.putText(resultImage, "High Anomaly", (int(x1 + w1/2), int(y1+15)),cv2.FONT_HERSHEY_SIMPLEX,0.75, (0,255,0), 2)
+
+        cv2.imshow('result', resultImage) # 작동되는 과정이 보여지는 부분
+        out.write(resultImage)
+        if cv2.waitKey(33) == 27:
+            break
+        #print(frameCounter)
+        
+    video.release()
+    cv2.destroyAllWindows()
     out.release()
 
-VehicheDetection("video.mp4")
+if __name__ == '__main__':
+    trackMultipleObjects()
