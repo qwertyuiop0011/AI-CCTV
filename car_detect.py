@@ -1,9 +1,9 @@
-import cv2 
+import cv2
 import dlib
 import math
 
-carCascade = cv2.CascadeClassifier('myhaar.xml')
-video = cv2.VideoCapture('test.mp4')
+carCascade = cv2.CascadeClassifier('cars.xml')
+video = cv2.VideoCapture('test/test_2.mp4')
 
 WIDTH = 1280
 HEIGHT = 720
@@ -46,7 +46,7 @@ def trackMultipleObjects():
     anomal = [None] * 1000
     fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
     
-    out = cv2.VideoWriter('outpy.mp4',fourcc, 20, size)
+    out = cv2.VideoWriter('output/output.mp4',fourcc, 20, size)
 
 
     while frameCounter<5396:
@@ -75,7 +75,7 @@ def trackMultipleObjects():
         
         if not (frameCounter % 10):
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) 
-            cars = carCascade.detectMultiScale(gray, 1.1, 13, 18, (24, 24))
+            cars = carCascade.detectMultiScale(gray, 1.1, 1)
             
             for (_x, _y, _w, _h) in cars:
                 x = int(_x)
@@ -137,12 +137,12 @@ def trackMultipleObjects():
                         anomal[i] = estimateanomal([x1, y1, w1, h1], [x2, y2, w2, h2])
                     
                     if speed[i] != None:
-                        if speed [i]>= 140:
+                        if speed [i]>= 160:
                             cv2.putText(resultImage, "Speed Violation", (int(x1 + w1/2), int(y1-5)),cv2.FONT_HERSHEY_SIMPLEX,0.75, (0,0,255), 2)
                     if anomal[i] != None:
                         print(anomal[i])
-                        if anomal[i] >= 3:
-                            cv2.putText(resultImage, "High Anomaly", (int(x1 + w1/2), int(y1+15)),cv2.FONT_HERSHEY_SIMPLEX,0.75, (0,255,0), 2)
+                        if anomal[i] >= 6:
+                            cv2.putText(resultImage, "High Anomaly", (int(x1 + w1/2), int(y1+15)),cv2.FONT_HERSHEY_SIMPLEX,0.75, (0,0,255), 2)
 
         cv2.imshow('result', resultImage)
         out.write(resultImage)
