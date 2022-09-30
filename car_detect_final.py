@@ -1,22 +1,20 @@
 import cv2
 import dlib
 import math
+from twilio.rest import Client
 
 carCascade = cv2.CascadeClassifier('cars.xml')
-video = cv2.VideoCapture('test/accident_3.mp4')
+video = cv2.VideoCapture('test/accident.mp4')
 
 WIDTH = 1280
 HEIGHT = 720
 length = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-print(length)
 total_frame = int(video.get(cv2. CAP_PROP_FPS))
 
 frame_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
 frame_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 size = (int(frame_width),int(frame_height))
-
-print(total_frame)
 
 def estimateSpeed(loc1, loc2):
     distance = math.sqrt(math.pow(loc2[0] - loc1[0], 2) + math.pow(loc2[1] - loc1[1], 2))
@@ -37,7 +35,11 @@ def trackMultipleObjects():
     frameCounter = 0
     currentCarID = 0
     fps = 0
-    
+    account_sid = "AC772840fd81ec571de07148a1e2e1a1d0"
+    auth_token  = "34ad3b362b9da7a46eb66c491861f2e8"
+    client = Client(account_sid, auth_token)
+
+    warn=False
     trackCar = {}
     carNumbers = {}
     carLocation1 = {}
@@ -48,7 +50,7 @@ def trackMultipleObjects():
     anomal = [None] * 1000
     fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
     
-    out = cv2.VideoWriter('output/output.mp4',fourcc, 20, size)
+    out = cv2.VideoWriter('output/accident.mp4',fourcc, 20, size)
 
 
     while frameCounter<5396:
@@ -77,7 +79,7 @@ def trackMultipleObjects():
         
         if not (frameCounter % 10):
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) 
-            cars = carCascade.detectMultiScale(gray, 1.1, 1)
+            cars = carCascade.detectMultiScale(image, 1.1, 1)
             
             for (_x, _y, _w, _h) in cars:
                 x = int(_x)
@@ -120,11 +122,7 @@ def trackMultipleObjects():
             t_y = int(trackedPosition.top())
             t_w = int(trackedPosition.width())
             t_h = int(trackedPosition.height())
-            #if carID in abnormal_cars.keys():
-             #   cv2.rectangle(resultImage, (t_x, t_y), (t_x + t_w, t_y + t_h), (0,0,255), 4)
-            #else:
-             #   cv2.rectangle(resultImage, (t_x, t_y), (t_x + t_w, t_y + t_h), rectangleColor, 4)
-                
+
             if (carID in abnormal_cars.keys()) or (carID in speed_cars.keys()):
                 cv2.rectangle(resultImage, (t_x, t_y), (t_x + t_w, t_y + t_h), (0,0,255), 4)
             else:
@@ -138,22 +136,35 @@ def trackMultipleObjects():
                 [x2, y2, w2, h2] = carLocation2[i]
         
                 carLocation1[i] = [x2, y2, w2, h2]
-        
+
                 if [x1, y1, w1, h1] != [x2, y2, w2, h2]:
                     if (speed[i] == None or speed[i] == 0) and y1 >= 275 and y1 <= 285:
                         speed[i] = estimateSpeed([x1, y1, w1, h1], [x2, y2, w2, h2])
-                    #if (anomal[i] == None or anomal[i] == 0):
                     anomal[i] = estimateanomal([x1, y1, w1, h1], [x2, y2, w2, h2])
                     
                     if speed[i] != None:
-                        if speed [i]>= 250: #Insufficient
+                        if speed[i]>= 250 and warn== False:
                             speed_cars[i]=1
+
+                            message = client.messages.create(
+                                     to='+82'+ "1090532803", 
+                                     from_="+19289188144",
+                                     body="Watch Out!"
+                            )
+                            warn = True
+
                             cv2.putText(resultImage, "Speed Violation", (int(x1 + w1/2), int(y1-5)),cv2.FONT_HERSHEY_SIMPLEX,0.75, (0,0,255), 2)
                     if anomal[i] != None:
-                        #cv2.putText(resultImage, str(anomal[i]), (int(x1 + w1/2), int(y1+15)),cv2.FONT_HERSHEY_SIMPLEX,0.75, (0,0,255), 2)
-                        #print(anomal[i])
-                        if anomal[i] >= 30:
+                        if anomal[i] >= 15 and warn== False:
                             abnormal_cars[i] = 1
+
+                            message = client.messages.create(
+                                     to='+82'+ "1090532803", 
+                                     from_="+19289188144",
+                                     body="Watch Out!"
+                            )
+                            warn = True
+
                             cv2.putText(resultImage, "High Anomaly", (int(x1 + w1/2), int(y1+15)),cv2.FONT_HERSHEY_SIMPLEX,0.75, (0,0,255), 2)
 
         cv2.imshow('result', resultImage)
