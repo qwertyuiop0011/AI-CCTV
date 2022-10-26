@@ -4,12 +4,12 @@ import math
 from twilio.rest import Client
 
 carCascade = cv2.CascadeClassifier('cars.xml')
-video = cv2.VideoCapture('test/accident.mp4')
+video = cv2.VideoCapture('test/normal.mp4')
 
 WIDTH = 1280
 HEIGHT = 720
 length = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-total_frame = int(video.get(cv2. CAP_PROP_FPS))
+total_frame = int(video.get(cv2.CAP_PROP_FPS))
 
 frame_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
 frame_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -50,7 +50,7 @@ def trackMultipleObjects():
     anomal = [None] * 1000
     fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
     
-    out = cv2.VideoWriter('output/accident.mp4',fourcc, 20, size)
+    out = cv2.VideoWriter('output/norm.mp4',fourcc, 20, size)
 
 
     while frameCounter<5396:
