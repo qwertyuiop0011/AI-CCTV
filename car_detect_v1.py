@@ -4,7 +4,7 @@ import math
 from twilio.rest import Client
 
 carCascade = cv2.CascadeClassifier('cars.xml')
-video = cv2.VideoCapture('test/normal.mp4')
+video = cv2.VideoCapture('test/accident_1.mp4')
 
 WIDTH = 1280
 HEIGHT = 720
@@ -50,7 +50,7 @@ def trackMultipleObjects():
     anomal = [None] * 1000
     fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
     
-    out = cv2.VideoWriter('output/norm.mp4',fourcc, 20, size)
+    out = cv2.VideoWriter('output/accident_1.mp4',fourcc, 20, size)
 
 
     while frameCounter<5396:
@@ -76,7 +76,7 @@ def trackMultipleObjects():
             trackCar.pop(carID, None)
             carLocation1.pop(carID, None)
             carLocation2.pop(carID, None)
-        
+
         if not (frameCounter % 10):
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) 
             cars = carCascade.detectMultiScale(image, 1.1, 1)
