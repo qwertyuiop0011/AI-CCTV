@@ -1,6 +1,7 @@
 import cv2
 import dlib
 import math
+import numpy as np
 from twilio.rest import Client
 
 carCascade = cv2.CascadeClassifier('cars.xml')
