@@ -25,7 +25,7 @@ def mark_img(img, blue_threshold=200, green_threshold=200, red_threshold=200): #
     mark[thresholds] = [0,0,0]
     return mark
 
-cap = cv2.VideoCapture('test/accident_3.mp4') 
+cap = cv2.VideoCapture('test/accident_3.mp4')
 
 while(cap.isOpened()):
     ret, image = cap.read()
