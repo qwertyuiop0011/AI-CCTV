@@ -163,7 +163,10 @@ def trackMultipleObjects():
                                      from_="+19289188144",
                                      body="Watch Out!"
                             )
+                            end = time.time()
                             warn = True
+                            print(f"{end - start:.5f} sec")
+                           
 
                             cv2.putText(resultImage, "High Anomaly", (int(x1 + w1/2), int(y1+15)),cv2.FONT_HERSHEY_SIMPLEX,0.75, (0,0,255), 2)
 
