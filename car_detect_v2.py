@@ -50,7 +50,7 @@ def trackMultipleObjects():
     anomal = [None] * 1000
     fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
     
-    out = cv2.VideoWriter('output/accident_1.mp4',fourcc, 20, size)
+    out = cv2.VideoWriter('output/accident_1_0101.mp4',fourcc, 20, size)
 
 
     while frameCounter<5396:
