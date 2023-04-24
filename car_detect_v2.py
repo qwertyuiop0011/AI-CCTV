@@ -5,7 +5,7 @@ import time
 from twilio.rest import Client
 
 carCascade = cv2.CascadeClassifier('cars.xml')
-video = cv2.VideoCapture('test/accident_1.mp4')
+video = cv2.VideoCapture('test/accident_4.mp4')
 
 WIDTH = 1280
 HEIGHT = 720
@@ -51,7 +51,7 @@ def trackMultipleObjects():
     anomal = [None] * 1000
     fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
     
-    out = cv2.VideoWriter('output/accident_1_0101.mp4',fourcc, 20, size)
+    out = cv2.VideoWriter('output/accident_1_01044401.mp4',fourcc, 20, size)
 
 
     while frameCounter<5396:
@@ -147,17 +147,23 @@ def trackMultipleObjects():
                         if speed[i]>= 250 and warn== False:
                             speed_cars[i]=1
 
+                            start = time.time()
+
                             message = client.messages.create(
                                      to='+82'+ "1090532803", 
                                      from_="+19289188144",
                                      body="Watch Out!"
                             )
+                            end = time.time()
                             warn = True
+                            print(f"{end - start:.5f} sec")
 
                             cv2.putText(resultImage, "Speed Violation", (int(x1 + w1/2), int(y1-5)),cv2.FONT_HERSHEY_SIMPLEX,0.75, (0,0,255), 2)
                     if anomal[i] != None:
                         if anomal[i] >= 15 and warn== False:
                             abnormal_cars[i] = 1
+
+                            start = time.time()
 
                             message = client.messages.create(
                                      to='+82'+ "1090532803", 

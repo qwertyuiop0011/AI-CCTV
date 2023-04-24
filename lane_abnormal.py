@@ -5,7 +5,7 @@ import time
 from twilio.rest import Client
 import numpy as np
 carCascade = cv2.CascadeClassifier('cars.xml')
-video = cv2.VideoCapture('test/accident_3.mp4')
+video = cv2.VideoCapture('test/accident_2.mp4')
 
 WIDTH = 1280
 HEIGHT = 720
@@ -29,7 +29,7 @@ def getFirstFrame(videofile):
         
 left_avg=np.array([])
 right_avg=np.array([])
-img = getFirstFrame('test/accident_3.mp4')
+img = getFirstFrame('test/accident_2.mp4')
 lst =[]
 gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
@@ -103,7 +103,7 @@ def trackMultipleObjects():
     anomal = [None] * 1000
     fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
     laneCounter = {}
-    out = cv2.VideoWriter('output/accident_1_0101.mp4',fourcc, 20, size)
+    out = cv2.VideoWriter('output/accident_1_01000111.mp4',fourcc, 20, size)
 
 
     while frameCounter<5396:
