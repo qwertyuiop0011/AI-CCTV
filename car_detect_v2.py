@@ -5,7 +5,7 @@ import time
 from twilio.rest import Client
 
 carCascade = cv2.CascadeClassifier('cars.xml')
-video = cv2.VideoCapture('test/accident_4.mp4')
+video = cv2.VideoCapture('test/accident_1.mp4')
 
 WIDTH = 1280
 HEIGHT = 720
@@ -51,7 +51,7 @@ def trackMultipleObjects():
     anomal = [None] * 1000
     fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
     
-    out = cv2.VideoWriter('output/accident_1_01044401.mp4',fourcc, 20, size)
+    out = cv2.VideoWriter('output/accident_1.mp4',fourcc, 20, size)
 
 
     while frameCounter<5396:
@@ -156,7 +156,7 @@ def trackMultipleObjects():
                             )
                             end = time.time()
                             warn = True
-                            print(f"{end - start:.5f} sec")
+                            # print(f"{end - start:.5f} sec")
 
                             cv2.putText(resultImage, "Speed Violation", (int(x1 + w1/2), int(y1-5)),cv2.FONT_HERSHEY_SIMPLEX,0.75, (0,0,255), 2)
                     if anomal[i] != None:
@@ -172,7 +172,7 @@ def trackMultipleObjects():
                             )
                             end = time.time()
                             warn = True
-                            print(f"{end - start:.5f} sec")
+                            # print(f"{end - start:.5f} sec")
                            
 
                             cv2.putText(resultImage, "High Anomaly", (int(x1 + w1/2), int(y1+15)),cv2.FONT_HERSHEY_SIMPLEX,0.75, (0,0,255), 2)

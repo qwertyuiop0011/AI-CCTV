@@ -5,7 +5,7 @@ import time
 from twilio.rest import Client
 import numpy as np
 carCascade = cv2.CascadeClassifier('cars.xml')
-video = cv2.VideoCapture('test/accident_2.mp4')
+video = cv2.VideoCapture('test/accident_3.mp4')
 
 WIDTH = 1280
 HEIGHT = 720
@@ -29,7 +29,7 @@ def getFirstFrame(videofile):
         
 left_avg=np.array([])
 right_avg=np.array([])
-img = getFirstFrame('test/accident_2.mp4')
+img = getFirstFrame('test/accident_3.mp4')
 lst =[]
 gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
@@ -56,7 +56,7 @@ for line in lines:
         lst.append([(x1,y1),(x2,y2)])
 lines_edges = cv2.addWeighted(img, 0.8, line_image, 1, 0)
 
-cv2.imwrite('testt.jpg',lines_edges)
+cv2.imwrite('accident_3.jpg',lines_edges)
 print(lst)
 def calculateDistance(x,y):
     for i in lst:
@@ -103,7 +103,7 @@ def trackMultipleObjects():
     anomal = [None] * 1000
     fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
     laneCounter = {}
-    out = cv2.VideoWriter('output/accident_1_01000111.mp4',fourcc, 20, size)
+    out = cv2.VideoWriter('output/accident_3_laned.mp4',fourcc, 20, size)
 
 
     while frameCounter<5396:
@@ -193,7 +193,7 @@ def trackMultipleObjects():
                     if ((t_x <= x_bar <= (t_x + t_w)) and (t_y <= y_bar <= (t_y + t_h)) and (x <= t_x_bar <= (x + w)) and (y <= t_y_bar <= (y + h))):
                         matchCarID = carID
                         if calculateDistance(carLocation1[matchCarID][0],carLocation1[matchCarID][1]) and carLocation1[matchCarID][5]==0:
-                            print("Aleart!",carID)
+                            print("Alert!",carID)
                             carLocation1[carID][4] +=1
                             carLocation1[carID][5] =1
                 if matchCarID is None:
