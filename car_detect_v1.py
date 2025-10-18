@@ -35,8 +35,8 @@ def trackMultipleObjects():
     frameCounter = 0
     currentCarID = 0
     fps = 0
-    account_sid = "AC772840fd81ec571de07148a1e2e1a1d0"
-    auth_token  = "34ad3b362b9da7a46eb66c491861f2e8"
+    account_sid = "REDACTED"
+    auth_token  = "REDACTED"
     client = Client(account_sid, auth_token)
 
     warn=False
@@ -147,8 +147,8 @@ def trackMultipleObjects():
                             speed_cars[i]=1
 
                             message = client.messages.create(
-                                     to='+82'+ "1090532803", 
-                                     from_="+19289188144",
+                                     to='REDACTED'+ "REDACTED", 
+                                     from_="REDACTED",
                                      body="Watch Out!"
                             )
                             warn = True
@@ -159,8 +159,8 @@ def trackMultipleObjects():
                             abnormal_cars[i] = 1
 
                             message = client.messages.create(
-                                     to='+82'+ "1090532803", 
-                                     from_="+19289188144",
+                                     to='REDACTED'+ "REDACTED", 
+                                     from_="REDACTED",
                                      body="Watch Out!"
                             )
                             warn = True
